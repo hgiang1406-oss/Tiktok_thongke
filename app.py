@@ -21,15 +21,22 @@ def stats():
             headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"},
             timeout=25
         )
-        response.raise_for_status()
+app.logger.info(
+    "TikWM HTTP status=%s; response=%s",
+    response.status_code,
+    response.text[:500]
+)
         data = response.json()
         if data.get("code") not in (None, 0, "0"):
             return jsonify(error=data.get("msg") or "Dịch vụ dữ liệu không trả về video."), 502
         return jsonify(data)
     except requests.Timeout:
         return jsonify(error="Dịch vụ lấy số liệu hết thời gian chờ. Thử lại sau."), 504
-    except requests.RequestException:
-        return jsonify(error="Máy chủ không kết nối được dịch vụ dữ liệu TikTok."), 502
+    except requests.RequestException as e:
+        app.logger.exception("Loi khi goi dich vu TikWM")
+        return jsonify(
+            error="Không kết nối được dịch vụ dữ liệu TikTok. Vui lòng thử lại."
+        ), 502
     except ValueError:
         return jsonify(error="Dịch vụ dữ liệu trả về phản hồi không hợp lệ."), 502
 
